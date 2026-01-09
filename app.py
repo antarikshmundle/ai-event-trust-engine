@@ -3,19 +3,29 @@ import pandas as pd
 
 st.set_page_config(page_title="AI Event Trust Engine", layout="centered")
 
-st.title("Crowdsourced Event Platform")
-st.subheader("AI-based Fake / Spam Event Detection")
+# ---------- HEADER ----------
+st.title("AI-based Event Trust Engine")
+st.subheader("Detecting fake and spam events in crowdsourced platforms")
 
-# Load data
+st.markdown("""
+This dashboard analyzes **crowdsourced event data** and assigns a **Trust Score**
+based on behavioral patterns such as description quality, organizer activity,
+and suspicious keywords.
+""")
+
+st.markdown("---")
+
+# ---------- LOAD DATA ----------
 df = pd.read_csv("events.csv")
 
-df["posted_events_count"] = pd.to_numeric(df["posted_events_count"], errors="coerce")
-df["posted_events_count"] = df["posted_events_count"].fillna(0)
-
+df["posted_events_count"] = pd.to_numeric(
+    df["posted_events_count"], errors="coerce"
+).fillna(0)
 
 st.markdown("### Uploaded Event Data")
 st.dataframe(df)
 
+# ---------- AI LOGIC ----------
 def calculate_trust_score(row):
     score = 100
 
@@ -33,7 +43,8 @@ def calculate_trust_score(row):
 
     return max(score, 0)
 
-if st.button("Analyze Events"):
+# ---------- RUN ANALYSIS ----------
+if st.button("Run AI Trust Analysis"):
     df["Trust Score"] = df.apply(calculate_trust_score, axis=1)
 
     def label(score):
@@ -46,6 +57,24 @@ if st.button("Analyze Events"):
 
     df["Status"] = df["Trust Score"].apply(label)
 
+    # ---------- SUMMARY ----------
+    risky_count = len(df[df["Status"] != "Trusted"])
+    total = len(df)
+
+    st.success(
+        f"Analysis complete: {risky_count} out of {total} events "
+        f"are flagged as suspicious or high risk."
+    )
+
+    # ---------- LEGEND ----------
+    st.markdown("""
+**Legend:**  
+🟢 **Trusted Event**  
+🟡 **Suspicious Event**  
+🔴 **High Risk / Spam Event**
+""")
+
+    # ---------- COLOR CODING ----------
     def highlight_status(row):
         if row["Status"] == "Trusted":
             return ["background-color: #c6f6d5"] * len(row)
